@@ -1,7 +1,12 @@
-import RPi.GPIO as GPIO
+import pigpio
 import Adafruit_ADS1x15
 import time
 import ifttNotification
+
+#safe open = 1935
+#danger open = 2035
+#safe closed = 769
+#danger closed = 518
 
 doorIsOpening = False
 doorIsClosing = False
@@ -21,7 +26,7 @@ gSpeed = None
 gMaxTime = None
 gMotorOpenDirection = None
 gMotorClosedDirection = None
-gPwm = None
+gPi = None
 
 def setupMotorControl( gpioMotorPin, speed, maxTime, openDirection  ) :
 	global gMotorPin
@@ -29,18 +34,16 @@ def setupMotorControl( gpioMotorPin, speed, maxTime, openDirection  ) :
 	global gMaxTime
 	global gMotorOpenDirection
 	global gMotorClosedDirection
-	global gPwm
+	global gPi
 	
 	gMotorPin = gpioMotorPin
-	GPIO.setmode(GPIO.BOARD)
-	GPIO.setup(motorPin,GPIO.OUT)	
-	gPwm=GPIO.PWM(motorPin,50)
+	gPi=pigpio.pi()
 	gMotorOpenDirection = openDirection
 	gMotorClosedDirection = -1 * openDirection
 	gMaxTime = maxTime
 	gSpeed = speed
 	
-def setupDoorSensor( adcPotPin, openDirection, safeMaxVoltage, safeMinVoltage, dangerMaxVoltage, dangerMinVoltage )
+def setupDoorSensor( adcPotPin, openDirection, safeMaxVoltage, safeMinVoltage, dangerMaxVoltage, dangerMinVoltage ) :
 	global gPotPin
 	global gAdc
 	global gGain
@@ -51,93 +54,110 @@ def setupDoorSensor( adcPotPin, openDirection, safeMaxVoltage, safeMinVoltage, d
 	global gPotOpenDirection
 	global gPotClosedDirection
 	
-	gPotPin = adcPotPint
+	gPotPin = adcPotPin
 	gGain = 1
-	gAdc = adc.read_adc(gPotPin, gGain)
-	gDangerMaxVoltage = dangerMaxVoltage
-	gDangerMinVoltage = dangerMinVoltage
-	gSafeMinVoltage = safeMinVoltage
-	gSafeMaxVoltage = safeMaxVoltage
-	gPotOpenDirection = openDirection
-	gPotClosedDirection = -1 * openDirection
+	gAdc = Adafruit_ADS1x15.ADS1015()
+	gDangerMaxVoltage = float(dangerMaxVoltage)
+	gDangerMinVoltage = float(dangerMinVoltage)
+	gSafeMinVoltage = float(safeMinVoltage)
+	gSafeMaxVoltage = float(safeMaxVoltage)
+	gPotOpenDirection = float(openDirection)
+	gPotClosedDirection = float(-1 * openDirection)
 	
-def openDoor()
-	if gAdc == None or gPwm == None :
+def openDoor() :
+	if gPi == None or gAdc == None :
 		raise Exception("Call setupDoorSensor and/or setupMotorControl first")
-		
+
+	gAdc.start_adc(gPotPin, 1, 490)
+	
 	if isDoorOpen() :
 		print 'Door is already open!'
 		return 
 
-	startTime = time.clock();
-	currentTime = time.clock();
-	runningTime = currentTime - startTime;
-	
-	gPwm.start( motorSpeedToDutyCycle( gSpeed * gMotorOpenDirection ) )
-
+	startTime = time.time()
+	currentTime = startTime
+	runningTime = currentTime - startTime
+		
+	gPi.set_PWM_frequency(gMotorPin, 50)
+	gPi.set_servo_pulsewidth(gMotorPin, motorSpeedToDutyCycle( gSpeed * gMotorOpenDirection ) )
+		
 	global doorIsOpening
 	doorIsOpening = True
 
-	while !isDoorOpen() and runningTime < gMaxTime :
-		currentTime = time.clock()
+	while not isDoorOpen() and runningTime < gMaxTime :
+		currentTime = time.time()
 		runningTime = currentTime - startTime
 		time.sleep(0.005)
 
-	gPwm.stop()
+	gPi.set_servo_pulsewidth(gMotorPin, 0 )
+	gPi.set_PWM_frequency(gMotorPin, 0)
+	time.sleep(0.5)
+	doorIsOpening = False;
+	
+	print getDoorOpenPercentage()
 	
 	if isDoorOpen() :
 		if __debug__:
 			print 'Door is now open'
-	else "
+	else :
 		if __debug__:
 			print 'Motor timeout'
 			ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
 
-	doorIsOpening = False;
+	gAdc.stop_adc()
 	
-def closeDoor()
-	if gAdc == None or gPwm == None :
+def closeDoor() :
+	if gAdc == None or gPi == None :
 		raise Exception("Call setupDoorSensor and/or setupMotorControl first")
-		
+
+	gAdc.start_adc(gPotPin, 1, 490)
+	
 	if isDoorClosed() :
 		print 'Door is already closed!'
 		return 
 
-	startTime = time.clock();
-	currentTime = time.clock();
-	runningTime = currentTime - startTime;
+	startTime = time.time()
+	currentTime = startTime
+	runningTime = currentTime - startTime
 	
-	gPwm.start( motorSpeedToDutyCycle( gSpeed * gMotorClosedDirection ) )
+	gPi.set_PWM_frequency(gMotorPin, 50)
+	gPi.set_servo_pulsewidth(gMotorPin, motorSpeedToDutyCycle( gSpeed * -1 * gMotorOpenDirection ) )
 
 	global doorIsClosing
 	doorIsClosing = True
 
-	while !isDoorClosed() and runningTime < gMaxTime :
-		currentTime = time.clock()
+	while not isDoorClosed() and runningTime < gMaxTime :
+		currentTime = time.time()
 		runningTime = currentTime - startTime
 		time.sleep(0.005)
 
-	gPwm.stop()
-	
+	gPi.set_servo_pulsewidth(gMotorPin, 0 )
+	gPi.set_PWM_frequency(gMotorPin, 0)	
+	time.sleep(0.5)
+	doorIsClosing = False;
+
 	if isDoorClosed() :
 		if __debug__:
-			print 'Door is now open'
-	else "
+			print 'Door is now closed'
+	else :
 		if __debug__:
 			print 'Motor timeout'
 			ifttNotification.sendDoorEmailNotification('Closing', getDoorOpenPercentage() )
 
-	doorIsClosing = False;
+	gAdc.stop_adc()
 
-def isDoorOpen()
+def isDoorOpen() :
 	if gAdc == None :
 		raise Exception("Call setupDoorSensor first")
 
+	global doorIsOpening
 	percent = getDoorOpenPercentage()
-	if percent > 100.0
+	if not doorIsOpening :
+		print percent
+	if percent > 100.0 :
 		print 'Pot sensor is outside the safe range! STOP!'
 		return True
-	if percent < 0.0 
+	if percent < 0.0 :
 		print 'Pot sensor is outside the safe range! STOP!'
 		if doorIsOpening :
 			#stop the door trying to open!
@@ -147,46 +167,73 @@ def isDoorOpen()
 			
 	return percent == 100.0
 	
-def isDoorClosed()
+def isDoorClosed() :
 	if gAdc == None :
 		raise Exception("Call setupDoorSensor first")
 		
 	percent = getDoorOpenPercentage()
-	if percent < 0.0
+	global doorIsClosing
+	if percent < 0.0 :
 		print 'Pot sensor is outside the safe range! STOP!'
 		return True
-	if percent > 100.0 
+	if percent > 100.0 :
 		print 'Pot sensor is outside the safe range! STOP!'
 		if doorIsClosing :
-			#stop the door trying to close!
-			return True
+			danger = getDoorOpenPercentage(True)
+			if danger > 100.0 :
+				#stop the door trying to close!
+				return True
+			else :
+				return False
 		else :
 			return False
 			
 	return percent == 0.0
 
-def getPotReading()
+def getPotReading() :
 	if gAdc == None :
 		raise Exception("Call setupDoorSensor first")
 		
-	sensorValue = gAdc.read_adc(gPotPin, gGain)
-	voltage = sensorValue * (4.096/4095)
-	return voltage
+	global doorIsOpening
+	global doorIsClosing
+	sensorValue = gAdc.get_last_result()
+	if doorIsOpening :
+		return sensorValue + 250 * gPotOpenDirection
+	elif doorIsClosing :
+		return sensorValue + 150 * -1 * gPotOpenDirection
+	else :
+		return sensorValue
 	
-def getDoorOpenPercentage()
+def getDoorOpenPercentage( useDanger = False ) :
 	if gAdc == None :
 		raise Exception("Call setupDoorSensor first")
-		
-	voltage = getPotReading()
-	percent = (voltage - gSafeMinVoltage) / (gSafeMaxVoltage - gSafeMinVoltage)
-	if doorOpenSensorDirection == -1.0 :
+	
+	minVoltage = None
+	maxVoltage = None
+	if useDanger:
+		minVoltage = gDangerMinVoltage
+		maxVoltage = gDangerMaxVoltage
+	else:
+		minVoltage = gSafeMinVoltage
+		maxVoltage = gSafeMaxVoltage
+	
+	voltage = float(getPotReading())
+	percent = (voltage - minVoltage) / (maxVoltage - minVoltage)
+	if gPotOpenDirection == -1 :
 		percent = 1 - percent
 
 	percent = percent * 100
 	return percent
 
-def motorSpeedToDutyCycle( motorSpeed )
-	if gPwm == None :
+def motorSpeedToDutyCycle( motorSpeed ) :
+
+	if motorSpeed > 0.0 :
+		return 1650
+	else :
+		return 1400
+
+
+	if gPi == None :
 		raise Exception("Call setupMotorControl first")
 		
 	#Motor speed should be between -255 and 255
@@ -196,8 +243,16 @@ def motorSpeedToDutyCycle( motorSpeed )
 	#1.0, 1.5, and 2.0ms for rev, off, and fwd
 	#-255 = 1.0ms and 255 = 2.0ms
 	#510 = 1.0 ms.
+	print motorSpeed
 	pulseWidth = ((( motorSpeed + 255 ) / 510)  + 1 ) *0.001
 	dutyCycle = pulseWidth * 50
 	#duty cycle is calcuated as a decimal, but should be returned as a percent
+	print dutyCycle
 	return dutyCycle * 100
 	
+def  stopMotor() :
+	if gPi == None :
+		raise Exception("Call setupMotorControl first")
+
+	gPi.set_servo_pulsewidth(gMotorPin, 0 )
+	gPi.set_PWM_frequency(gMotorPin, 0)

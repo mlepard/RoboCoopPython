@@ -1,27 +1,33 @@
 import Adafruit_DHT
 import RPi.GPIO as GPIO
+import os
+
+__DHT_PIN__  = None
+__Heater_Pin__ = None
+__DHT_TYPE__ = Adafruit_DHT.DHT22
 
 def initTempControl(tempPin, heaterPin):
-	global __DHT_PIN__  = None # add this line!
-	global __DHT_TYPE__ = Adafruit_DHT.DHT22
-	if __DHT_PIN__ is None: # see notes below; explicit test for None
+	global __DHT_PIN__ 
+	global __DHT_TYPE__
+
+	if __DHT_PIN__ is None: 
 		__DHT_PIN__ = tempPin
-		GPIO.setmode(GPIO.BOARD)
-		GPIO.setup(__DHT_PIN__, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 	else:
 		raise RuntimeError("Temperature Control already initialized...")
 		return
 	
-	global __Heater_Pin__ = None
+	global __Heater_Pin__
 	if __Heater_Pin__ is None:
-		__HeaterPin__ = heaterPin
-		GPIO.setup(__HeaterPin__, GPIO.OUT)
-		GPIO.output(__HeaterPin__, 0)
+		__Heater_Pin__ = heaterPin
+		GPIO.setmode(GPIO.BCM)
+		GPIO.setup(__Heater_Pin__, GPIO.OUT)
 	else:
 		raise RuntimeError("Temperature Control already initialized...")
 		return
 		
-def getTemperature()
+def getTemperature() :
+	global __DHT_PIN__ 
+	global __DHT_TYPE__
 	if __DHT_PIN__ is None:
 		print "initTempControl not called..."
 		return None
@@ -31,14 +37,25 @@ def getTemperature()
 		print "Can't get temp, exiting..."
 	return temp
 	
-def turnHeaterOn()
+def turnHeaterOn() :
+	global __Heater_Pin__
 	if __Heater_Pin__ is None:
 		print "initTempControl not called..."
 		return
-	GPIO.output(__HeaterPin__, 1)
+	GPIO.output(__Heater_Pin__, 1)
 	
-def turnHeaterOff()
+def turnHeaterOff() :
 	if __Heater_Pin__ is None:
 		print "initTempControl not called..."
 		return
-	GPIO.output(__HeaterPin__, 0)	
+	GPIO.output(__Heater_Pin__, 0)
+	
+def isHeaterOn() :
+	pinStr = "gpio" + str(__Heater_Pin__)
+	systemStr = os.listdir('/sys/class/gpio')
+	print pinStr
+	print systemStr
+	if any(pinStr in s for s in systemStr):
+		return True
+	return False
+	
