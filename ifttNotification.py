@@ -1,11 +1,10 @@
-import requests
-
 class MakerTrigger(object):
   def __init__(self,key,trigger):
     self.key = key
     self.trigger = trigger
     self.maker = "https://maker.ifttt.com/trigger/" + self.trigger + "/with/key/" + self.key
   def alert(self,value1=0,value2=0,value3=0):
+    import requests
     self.value1 = value1
     self.value2 = value2
     self.value3 = value3

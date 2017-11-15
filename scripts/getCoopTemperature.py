@@ -1,24 +1,22 @@
 import os
 scriptPath = os.path.realpath(__file__)
 scriptPath = os.path.dirname(scriptPath)
-
 modulePath = os.path.split(scriptPath)[0]
-
 import sys
 sys.path.append(modulePath)
 
 import roboCoop
-import doorControl
+import temperatureControl
 
 try:
 	roboCoop.setupRoboCoop()
-	percent = doorControl.getDoorOpenPercentage()
-	state = ""
-	if percent < 10 :
-		state = "Closed"
-	elif percent > 90 :
-		state = "Open"
-	print 'Door is {} at {}'.format(state, percent)
+	temp = temperatureControl.getTemperature()
+	heater = ""
+	if temperatureControl.isHeaterOn():
+		heater = "ON"
+	else:
+		heater = "OFF"
+	print 'Coop is at {}.'.format(temp) + ' Heater is ' + heater
 
 finally:
 	roboCoop.cleanup()

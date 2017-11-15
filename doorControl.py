@@ -94,15 +94,11 @@ def openDoor() :
 	time.sleep(0.5)
 	doorIsOpening = False;
 	
-	print getDoorOpenPercentage()
-	
-	if isDoorOpen() :
-		if __debug__:
-			print 'Door is now open'
+	if isDoorOpen(20) :
+		print 'Door is now open'
 	else :
-		if __debug__:
-			print 'Motor timeout'
-			ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
+		print 'Motor timeout: Door at {}'.format(getDoorOpenPercentage())
+		ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
 
 	gAdc.stop_adc()
 	
@@ -136,59 +132,30 @@ def closeDoor() :
 	time.sleep(0.5)
 	doorIsClosing = False;
 
-	if isDoorClosed() :
-		if __debug__:
-			print 'Door is now closed'
+	if isDoorClosed(10) :
+		print 'Door is now closed'
 	else :
-		if __debug__:
-			print 'Motor timeout'
-			ifttNotification.sendDoorEmailNotification('Closing', getDoorOpenPercentage() )
+		print 'Motor timeout: Door at {}'.format(getDoorOpenPercentage())
+		ifttNotification.sendDoorEmailNotification('Closing', getDoorOpenPercentage() )
 
 	gAdc.stop_adc()
 
-def isDoorOpen() :
+def isDoorOpen( errorBar = 0 ) :
 	if gAdc == None :
 		raise Exception("Call setupDoorSensor first")
 
-	global doorIsOpening
 	percent = getDoorOpenPercentage()
-	if not doorIsOpening :
-		print percent
-	if percent > 100.0 :
-		print 'Pot sensor is outside the safe range! STOP!'
-		return True
-	if percent < 0.0 :
-		print 'Pot sensor is outside the safe range! STOP!'
-		if doorIsOpening :
-			#stop the door trying to open!
-			return True
-		else :
-			return False
 			
-	return percent == 100.0
+	return percent + errorBar >= 100.0
 	
-def isDoorClosed() :
+def isDoorClosed( errorBar = 0 ) :
 	if gAdc == None :
 		raise Exception("Call setupDoorSensor first")
 		
 	percent = getDoorOpenPercentage()
 	global doorIsClosing
-	if percent < 0.0 :
-		print 'Pot sensor is outside the safe range! STOP!'
-		return True
-	if percent > 100.0 :
-		print 'Pot sensor is outside the safe range! STOP!'
-		if doorIsClosing :
-			danger = getDoorOpenPercentage(True)
-			if danger > 100.0 :
-				#stop the door trying to close!
-				return True
-			else :
-				return False
-		else :
-			return False
 			
-	return percent == 0.0
+	return percent - errorBar <= 0.0
 
 def getPotReading() :
 	if gAdc == None :

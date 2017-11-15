@@ -51,11 +51,8 @@ def turnHeaterOff() :
 	GPIO.output(__Heater_Pin__, 0)
 	
 def isHeaterOn() :
-	pinStr = "gpio" + str(__Heater_Pin__)
-	systemStr = os.listdir('/sys/class/gpio')
-	print pinStr
-	print systemStr
-	if any(pinStr in s for s in systemStr):
-		return True
-	return False
-	
+	global __Heater_Pin__
+	if __Heater_Pin__ is None:
+		print "initTempControl not called..."
+		return
+	return GPIO.input(__Heater_Pin__)

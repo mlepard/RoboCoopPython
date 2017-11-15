@@ -1,6 +1,8 @@
 from datetime import datetime
 import time
 
+printDebug = False
+
 class Date :
 	def __init__(self, value1, value2):
 		self.month = value1
@@ -48,7 +50,7 @@ class Time :
 		return result
 		
 	def equal(self, time):
-		if __debug__:
+		if printDebug:
 			print 'Compare Time: Self is {}:{:02d} and Value is {}:{:02d} '.format( int(self.hour), int(self.minute), int(time.hour), int(time.minute))
 	
 		if self.hour == time.hour and self.minute == time.minute :
@@ -144,7 +146,7 @@ def getDoorOpenTime() :
 		doorOpenTime = currentSunData.sunRise.addTime( dateDeltaTime )
 
 	#doorOpenTime = addTime( doorOpenTime, sunriseExtraTime );
-	if __debug__:
+	if printDebug:
 		print 'DateDeltaTime is: {} '.format(dateDeltaTime.toString())
 		print 'DoorOpenTime is: {} '.format(doorOpenTime.toLocalTZString())
 			
@@ -173,7 +175,7 @@ def getDoorCloseTime() :
 		doorCloseTime = currentSunData.sunSet.addTime( dateDeltaTime )
 
 	#doorCloseTime = addTime( doorCloseTime, sunsetExtraTime );
-	if __debug__:
+	if printDebug:
 		print 'DateDeltaTime is: {} '.format(dateDeltaTime.toString())
 		print 'DoorCloseTime is: {} '.format(doorCloseTime.toLocalTZString())
 		
@@ -181,6 +183,7 @@ def getDoorCloseTime() :
 
 	
 def getSunRiseAndSetData( currentDate ) :
+	global sunData
 	index = 2 * (currentDate.month - 1)
 	deltaDate = 0.0
 	if currentDate.day > 15 :
@@ -193,13 +196,17 @@ def getSunRiseAndSetData( currentDate ) :
 		
 	currentSunData = sunData[index]
 	
-	if __debug__ :
+	if printDebug:
 		print  'Todays SunData: {}'.format(currentSunData.toString())
 	
 	return currentSunData
 
 def convertUTCToLocalTime( currentTime ) :
-	localTime = Time( currentTime.hour - 4, currentTime.minute )
+	if time.localtime().tm_isdst:
+		delta = 4
+	else:
+		delta = 5
+	localTime = Time( currentTime.hour - delta, currentTime.minute )
 	return localTime
 	
 def isDoorOpenTimeNow() :

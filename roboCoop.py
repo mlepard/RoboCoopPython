@@ -8,12 +8,16 @@ temperaturePin = 4
 motorPin = 14
 potPin = 3 
 
+printDebug = True
+
 def setupRoboCoop():
 	GPIO.setwarnings(False)
 	sunAndTime.initSunAndTime()
 	temperatureControl.initTempControl(4,15)
-	doorControl.setupDoorSensor(3, 1, 1800, 769, 1950, 318)
+	doorControl.setupDoorSensor(3, 1, 1800, 560, 1950, 318)
 	doorControl.setupMotorControl(14, 255, 3.0, 1)
+	
+	sunAndTime.printDebug = printDebug
 	
 def maintainTemperature(lowTemp, highTemp):
 	currentTemp = temperatureControl.getTemperature()
@@ -31,7 +35,7 @@ def doDoorControl():
 		doorControl.openDoor()
 		return
 		
-	if sunAndTime.isDoorClosedTimeNow() and not doorControl.isDoorClosed() :
+	if sunAndTime.isDoorCloseTimeNow() and not doorControl.isDoorClosed() :
 		doorControl.closeDoor()
 		return
 		
