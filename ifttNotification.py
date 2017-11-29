@@ -17,3 +17,15 @@ def sendDoorEmailNotification( door_action, door_status) :
 	ifttt = MakerTrigger(key,trigger)
 	ifttt.alert(door_action,door_status)
 	
+def sendLowTempEmailNotification( temperature ) :
+	key = "dFF3dgc7zX2Cas6ipyRuy1"
+	trigger = "coop_low_temperature"
+	ifttt = MakerTrigger(key,trigger)
+	ifttt.alert(temperature)
+	
+def sendHighHumidityEmailNotification( humidity ) :
+	key = "dFF3dgc7zX2Cas6ipyRuy1"
+	trigger = "coop_high_humidity"
+	ifttt = MakerTrigger(key,trigger)
+	ifttt.alert(humidity)	
+	

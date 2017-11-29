@@ -86,6 +86,10 @@ class SunRiseAndSetData :
 		return 'Date: {} SunRise: {} SunSet: {} RiseDelta: {} SetDelta: {}'.format(self.startDate.toString(), self.sunRise.toLocalTZString(), self.sunSet.toLocalTZString(), self.sunriseDelta, self.sunsetDelta) 
 
 def initSunAndTime():
+	global doorOpenExtraTime, doorClosedExtraTime
+	doorOpenExtraTime = Time(0,15)
+	doorClosedExtraTime = Time(0,45)
+	
 	global sunData
 	sunData = []
 	#Note, these times are in Eastern Daylight Time.
@@ -146,6 +150,7 @@ def getDoorOpenTime() :
 		doorOpenTime = currentSunData.sunRise.addTime( dateDeltaTime )
 
 	#doorOpenTime = addTime( doorOpenTime, sunriseExtraTime );
+	doorOpenTime = doorOpenTime.addTime(doorOpenExtraTime) 
 	if printDebug:
 		print 'DateDeltaTime is: {} '.format(dateDeltaTime.toString())
 		print 'DoorOpenTime is: {} '.format(doorOpenTime.toLocalTZString())
@@ -175,6 +180,7 @@ def getDoorCloseTime() :
 		doorCloseTime = currentSunData.sunSet.addTime( dateDeltaTime )
 
 	#doorCloseTime = addTime( doorCloseTime, sunsetExtraTime );
+	doorCloseTime = doorCloseTime.addTime(doorClosedExtraTime)
 	if printDebug:
 		print 'DateDeltaTime is: {} '.format(dateDeltaTime.toString())
 		print 'DoorCloseTime is: {} '.format(doorCloseTime.toLocalTZString())

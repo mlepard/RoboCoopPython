@@ -1,7 +1,6 @@
 import pigpio
 import Adafruit_ADS1x15
 import time
-import ifttNotification
 
 #safe open = 1935
 #danger open = 2035
@@ -72,7 +71,7 @@ def openDoor() :
 	
 	if isDoorOpen() :
 		print 'Door is already open!'
-		return 
+		return True
 
 	startTime = time.time()
 	currentTime = startTime
@@ -94,13 +93,16 @@ def openDoor() :
 	time.sleep(0.5)
 	doorIsOpening = False;
 	
+	retVal = False
 	if isDoorOpen(20) :
 		print 'Door is now open'
+		retVal = True
 	else :
 		print 'Motor timeout: Door at {}'.format(getDoorOpenPercentage())
-		ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
+		retVal = False
 
 	gAdc.stop_adc()
+	return retVal
 	
 def closeDoor() :
 	if gAdc == None or gPi == None :
@@ -110,7 +112,7 @@ def closeDoor() :
 	
 	if isDoorClosed() :
 		print 'Door is already closed!'
-		return 
+		return True
 
 	startTime = time.time()
 	currentTime = startTime
@@ -132,13 +134,16 @@ def closeDoor() :
 	time.sleep(0.5)
 	doorIsClosing = False;
 
+	retVal = False
 	if isDoorClosed(10) :
 		print 'Door is now closed'
+		retVal = True
 	else :
 		print 'Motor timeout: Door at {}'.format(getDoorOpenPercentage())
-		ifttNotification.sendDoorEmailNotification('Closing', getDoorOpenPercentage() )
+		retVal = False
 
 	gAdc.stop_adc()
+	return retVal
 
 def isDoorOpen( errorBar = 0 ) :
 	if gAdc == None :
@@ -165,9 +170,9 @@ def getPotReading() :
 	global doorIsClosing
 	sensorValue = gAdc.get_last_result()
 	if doorIsOpening :
-		return sensorValue + 250 * gPotOpenDirection
+		return sensorValue + 175 * gPotOpenDirection
 	elif doorIsClosing :
-		return sensorValue + 150 * -1 * gPotOpenDirection
+		return sensorValue + 200 * -1 * gPotOpenDirection
 	else :
 		return sensorValue
 	
@@ -195,9 +200,9 @@ def getDoorOpenPercentage( useDanger = False ) :
 def motorSpeedToDutyCycle( motorSpeed ) :
 
 	if motorSpeed > 0.0 :
-		return 1650
+		return 1800
 	else :
-		return 1400
+		return 1250
 
 
 	if gPi == None :

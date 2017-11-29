@@ -11,13 +11,13 @@ import temperatureControl
 try:
 	roboCoop.setupRoboCoop()
 	temp, humidity = temperatureControl.getTemperatureAndHumidity()
-	heater = ""
-	if temperatureControl.isHeaterOn():
-		heater = "ON"
-	else:
-		heater = "OFF"
-	print 'Coop is at {:.1f}C.'.format(temp) + ' Heater is ' + heater
-	print 'Coop Humidity is {:.0f}%.'.format(humidity)
+	if temp < -25:
+		import ifttNotification
+		ifttNotification.sendLowTempNotification(temp)
+	if temp < -5 and humidity > 75:
+		import ifttNotification
+		ifttNotification.sendHighHumidityEmailNotification(humidity)
+
 
 finally:
 	roboCoop.cleanup()

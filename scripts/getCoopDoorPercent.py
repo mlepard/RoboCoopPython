@@ -13,7 +13,7 @@ import doorControl
 try:
 	roboCoop.setupRoboCoop()
 	percent = doorControl.getDoorOpenPercentage()
-	state = ""
+	state = "Middle"
 	if percent < 10 :
 		state = "Closed"
 	elif percent > 90 :

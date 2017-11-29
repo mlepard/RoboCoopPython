@@ -15,7 +15,7 @@ def setupRoboCoop():
 	sunAndTime.initSunAndTime()
 	temperatureControl.initTempControl(4,15)
 	doorControl.setupDoorSensor(3, 1, 1800, 560, 1950, 318)
-	doorControl.setupMotorControl(14, 255, 3.0, 1)
+	doorControl.setupMotorControl(14, 255, 4.0, 1)
 	
 	sunAndTime.printDebug = printDebug
 	
@@ -32,11 +32,15 @@ def maintainTemperature(lowTemp, highTemp):
 
 def doDoorControl():
 	if sunAndTime.isDoorOpenTimeNow() and not doorControl.isDoorOpen() :
-		doorControl.openDoor()
+		if not doorControl.openDoor() :
+			import ifttNotification
+			ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
 		return
 		
 	if sunAndTime.isDoorCloseTimeNow() and not doorControl.isDoorClosed() :
-		doorControl.closeDoor()
+		if not doorControl.closeDoor() :
+			import ifttNotification
+			ifttNotification.sendDoorEmailNotification('Closing', getDoorOpenPercentage() )
 		return
 		
 def getDoorPercentageOpen():
