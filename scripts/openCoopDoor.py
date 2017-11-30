@@ -12,6 +12,9 @@ try:
 	roboCoop.setupRoboCoop()
 	doorControl.openDoor()
 	print 'Door is at {}'.format(doorControl.getDoorOpenPercentage())
+	
+except PotSensorError as e:
+	print 'Pot Sensor Error: {}'.format(e.args[0])	
 
 finally:
 	roboCoop.cleanup()
