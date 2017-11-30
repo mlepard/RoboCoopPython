@@ -31,16 +31,21 @@ def maintainTemperature(lowTemp, highTemp):
 		temperatureControl.turnHeaterOff()
 
 def doDoorControl():
-	if sunAndTime.isDoorOpenTimeNow() and not doorControl.isDoorOpen() :
-		if not doorControl.openDoor() :
-			import ifttNotification
-			ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
-		return
-		
-	if sunAndTime.isDoorCloseTimeNow() and not doorControl.isDoorClosed() :
-		if not doorControl.closeDoor() :
-			import ifttNotification
-			ifttNotification.sendDoorEmailNotification('Closing', getDoorOpenPercentage() )
+	try:
+		if sunAndTime.isDoorOpenTimeNow() and not doorControl.isDoorOpen() :
+				if not doorControl.openDoor() :
+					import ifttNotification
+					ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
+			return
+			
+		if sunAndTime.isDoorCloseTimeNow() and not doorControl.isDoorClosed() :
+			if not doorControl.closeDoor() :
+				import ifttNotification
+				ifttNotification.sendDoorEmailNotification('Closing', getDoorOpenPercentage() )
+			return
+	except PotSensorError as e:
+		import ifttNotification
+		ifttNotification.sendDoorEmailNotification('Pot Sensor Error', e.args[0] )
 		return
 		
 def getDoorPercentageOpen():

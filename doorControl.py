@@ -2,6 +2,9 @@ import pigpio
 import Adafruit_ADS1x15
 import time
 
+class PotSensorError(Exception):
+    pass
+
 #safe open = 1935
 #danger open = 2035
 #safe closed = 769
@@ -169,6 +172,10 @@ def getPotReading() :
 	global doorIsOpening
 	global doorIsClosing
 	sensorValue = gAdc.get_last_result()
+	
+	if sensorValue == 2047 :
+		raise PotSensorError("Pot reads 2047, probably unplugged")
+	
 	if doorIsOpening :
 		return sensorValue + 175 * gPotOpenDirection
 	elif doorIsClosing :
