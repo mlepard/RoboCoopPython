@@ -33,9 +33,9 @@ def maintainTemperature(lowTemp, highTemp):
 def doDoorControl():
 	try:
 		if sunAndTime.isDoorOpenTimeNow() and not doorControl.isDoorOpen() :
-				if not doorControl.openDoor() :
-					import ifttNotification
-					ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
+			if not doorControl.openDoor() :
+				import ifttNotification
+				ifttNotification.sendDoorEmailNotification('Opening', getDoorOpenPercentage() )
 			return
 			
 		if sunAndTime.isDoorCloseTimeNow() and not doorControl.isDoorClosed() :
