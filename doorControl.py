@@ -69,8 +69,6 @@ def setupDoorSensor( adcPotPin, openDirection, safeMaxVoltage, safeMinVoltage, d
 def openDoor() :
 	if gPi == None or gAdc == None :
 		raise Exception("Call setupDoorSensor and/or setupMotorControl first")
-
-	gAdc.start_adc(gPotPin, 1, 490)
 	
 	if isDoorOpen() :
 		print 'Door is already open!'
@@ -104,14 +102,11 @@ def openDoor() :
 		print 'Motor timeout: Door at {}'.format(getDoorOpenPercentage())
 		retVal = False
 
-	gAdc.stop_adc()
 	return retVal
 	
 def closeDoor() :
 	if gAdc == None or gPi == None :
 		raise Exception("Call setupDoorSensor and/or setupMotorControl first")
-
-	gAdc.start_adc(gPotPin, 1, 490)
 	
 	if isDoorClosed() :
 		print 'Door is already closed!'
@@ -145,7 +140,6 @@ def closeDoor() :
 		print 'Motor timeout: Door at {}'.format(getDoorOpenPercentage())
 		retVal = False
 
-	gAdc.stop_adc()
 	return retVal
 
 def isDoorOpen( errorBar = 0 ) :
@@ -171,7 +165,7 @@ def getPotReading() :
 		
 	global doorIsOpening
 	global doorIsClosing
-	sensorValue = gAdc.get_last_result()
+	sensorValue = gAdc.read_adc(gPotPin)
 	
 	if sensorValue == 2047 :
 		raise PotSensorError("Pot reads 2047, probably unplugged")

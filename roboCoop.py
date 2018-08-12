@@ -3,19 +3,19 @@ import temperatureControl
 import doorControl
 import RPi.GPIO as GPIO 
 
-heaterPin = 15
-temperaturePin = 4
-motorPin = 14
-potPin = 3 
+heaterPin = 23
+temperaturePin = 11
+motorPin = 24
+potPin = 2 
 
 printDebug = True
 
 def setupRoboCoop():
 	GPIO.setwarnings(False)
 	sunAndTime.initSunAndTime()
-	temperatureControl.initTempControl(4,15)
-	doorControl.setupDoorSensor(3, 1, 1800, 560, 1950, 318)
-	doorControl.setupMotorControl(14, 255, 4.0, 1)
+	temperatureControl.initTempControl(temperaturePin,heaterPin)
+	doorControl.setupDoorSensor(potPin, 1, 1800, 560, 1950, 318)
+	doorControl.setupMotorControl(motorPin, 255, 4.0, 1)
 	
 	sunAndTime.printDebug = printDebug
 	
