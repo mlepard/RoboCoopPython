@@ -19,6 +19,7 @@ try:
 	elif percent > 90 :
 		state = "Open"
 	print 'Door is {} at {}'.format(state, percent)
-
+except PotSensorError as e:
+	print 'Pot Sensor Error: {}'.format(e.args[0])
 finally:
 	roboCoop.cleanup()
